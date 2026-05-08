@@ -1,16 +1,7 @@
 package com.aliya.fetchjobapp.company;
 
+public class CompanyDTO {
 
-import com.aliya.fetchjobapp.job.Job;
-import jakarta.persistence.*;
-
-import java.util.List;
-
-@Entity
-public class Company {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String companyName;
@@ -19,11 +10,12 @@ public class Company {
 
     private String Location;
 
-    @OneToMany
-    private List<Job> jobs;
 
-
-    public Company() {
+    public CompanyDTO(Long id, String companyName, String description, String location) {
+        this.id = id;
+        this.companyName = companyName;
+        this.description = description;
+        Location = location;
     }
 
     public Long getId() {
@@ -56,13 +48,5 @@ public class Company {
 
     public void setLocation(String location) {
         Location = location;
-    }
-
-    public List<Job> getJobs() {
-        return jobs;
-    }
-
-    public void setJobs(List<Job> jobs) {
-        this.jobs = jobs;
     }
 }
