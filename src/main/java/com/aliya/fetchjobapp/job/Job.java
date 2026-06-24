@@ -1,9 +1,7 @@
 package com.aliya.fetchjobapp.job;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.aliya.fetchjobapp.company.Company;
+import jakarta.persistence.*;
 import org.hibernate.annotations.ValueGenerationType;
 
 import java.math.BigDecimal;
@@ -25,7 +23,14 @@ public class Job {
 
     private BigDecimal minSalary;
 
+
     private BigDecimal maxSalary;
+
+    private Long postedBy;
+
+    @ManyToOne
+    @JoinColumn(name = "company_id")
+    private Company company;
 
 
 
@@ -87,6 +92,24 @@ public class Job {
     public void setMaxSalary(BigDecimal maxSalary) {
         this.maxSalary = maxSalary;
     }
+
+
+    public Company getCompany() {
+        return company;
+    }
+
+    public void setCompany(Company company) {
+        this.company = company;
+    }
+
+    public Long getPostedBy() {
+        return postedBy;
+    }
+
+    public void setPostedBy(Long postedBy) {
+        this.postedBy = postedBy;
+    }
+
 
 //    public Job(long id, String title, String description, String location, String status, BigDecimal minSalary, BigDecimal maxSalary) {
 //        this.id = id;

@@ -2,6 +2,7 @@ package com.aliya.fetchjobapp.review;
 
 import com.aliya.fetchjobapp.company.Company;
 import jakarta.persistence.*;
+import jakarta.persistence.criteria.Fetch;
 
 
 @Entity
@@ -17,7 +18,9 @@ public class Review {
 
     private double rating;
 
-    @ManyToOne
+    private Long reviewedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id")
     private Company company;
 
@@ -62,5 +65,13 @@ public class Review {
 
     public void setCompany(Company company) {
         this.company = company;
+    }
+
+    public Long getReviewedBy() {
+        return reviewedBy;
+    }
+
+    public void setReviewedBy(Long reviewedBy) {
+        this.reviewedBy = reviewedBy;
     }
 }

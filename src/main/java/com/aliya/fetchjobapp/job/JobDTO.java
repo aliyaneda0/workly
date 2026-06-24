@@ -1,6 +1,7 @@
 package com.aliya.fetchjobapp.job;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 
@@ -20,6 +21,12 @@ public class JobDTO {
     private String location;
 
     private JobStatus status;
+
+    @NotNull(message = "Company ID is required")
+    private Long companyId;
+
+    private long postedBy;
+
 
     public Long getId() {
         return id;
@@ -76,4 +83,11 @@ public class JobDTO {
     public void setStatus(JobStatus status) {
         this.status = status;
     }
+
+    public Long getCompanyId() { return companyId; }
+    public void setCompanyId(Long companyId) { this.companyId = companyId; }
+
+    public Long getPostedBy() { return postedBy; }
+    public void setPostedBy(Long postedBy) { this.postedBy = postedBy; }
+
 }

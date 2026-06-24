@@ -12,6 +12,8 @@ public class ReviewDTO {
 
     private Long companyId;
 
+    private Long reviewedBy;
+
     public ReviewDTO(Long id, String title, String description, double rating, Long companyId) {
         this.id = id;
         this.title = title;
@@ -59,5 +61,8 @@ public class ReviewDTO {
     public void setCompanyId(Long companyId) {
         this.companyId = companyId;
     }
+
+    public Long getReviewedBy() { return reviewedBy; }
+    public void setReviewedBy(Long reviewedBy) { this.reviewedBy = reviewedBy; }
 
 }

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/company/{companyId}/review")
+@RequestMapping("/company/{companyId}/reviews")
 public class ReviewController {
 
     private final ReviewService reviewService;
