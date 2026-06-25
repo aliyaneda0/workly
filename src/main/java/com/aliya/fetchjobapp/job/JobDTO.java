@@ -25,7 +25,7 @@ public class JobDTO {
     @NotNull(message = "Company ID is required")
     private Long companyId;
 
-    private long postedBy;
+    private Long postedBy;
 
 
     public Long getId() {

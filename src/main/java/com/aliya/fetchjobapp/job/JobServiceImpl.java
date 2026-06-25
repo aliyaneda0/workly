@@ -4,6 +4,8 @@ package com.aliya.fetchjobapp.job;
 import com.aliya.fetchjobapp.company.Company;
 import com.aliya.fetchjobapp.company.CompanyRepository;
 import com.aliya.fetchjobapp.exception.ResourceNotFoundException;
+import com.aliya.fetchjobapp.review.Review;
+import com.aliya.fetchjobapp.review.ReviewDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -95,7 +97,9 @@ public class JobServiceImpl implements JobService {
         dto.setMaxSalary(job.getMaxSalary());
         dto.setLocation(job.getLocation());
         dto.setStatus(job.getStatus());
-        return dto;
+        dto.setCompanyId(job.getCompany().getId());
+        dto.setPostedBy(job.getPostedBy());
+         return dto;
     }
 
     private Job toEntity(JobDTO dto, Company company) {
@@ -106,6 +110,7 @@ public class JobServiceImpl implements JobService {
         job.setMaxSalary(dto.getMaxSalary());
         job.setLocation(dto.getLocation());
         job.setStatus(dto.getStatus() != null ? dto.getStatus() : JobStatus.DRAFT);
+        job.setCompany(company);
         return job;
     }
 
