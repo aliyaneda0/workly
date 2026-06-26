@@ -79,11 +79,12 @@ public class JobServiceImpl implements JobService {
 
     @Override
     @Transactional
-    public void deleteJob(Long id) {
+    public boolean deleteById(Long id) {
         if (!jobRepository.existsById(id)) {
             throw new ResourceNotFoundException("Job not found with id: " + id);
         }
         jobRepository.deleteById(id);
+        return true;
     }
 
     // ── private mappers ──────────────────────────────────────

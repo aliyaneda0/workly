@@ -8,5 +8,6 @@ public interface JobService {
     List<JobDTO> getAllJobs();
     JobDTO getJobById(Long id);
     JobDTO updateJob(Long id , JobDTO jobDTO);
-    void deleteJob(Long id);
+
+    boolean deleteById(Long id);
 }
