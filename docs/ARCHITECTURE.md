@@ -109,7 +109,7 @@ OAuth callback contract:
 
 - Endpoint access:
   - Public: `GET /api/jobs/**`, auth endpoints, OAuth endpoints
-  - Company/Admin: `/api/company/**`
+  - Company/Admin: `/api/companies/**`
   - Applicant/Admin: `/api/applicant/**`
   - Admin only: `/api/admin/**`
 - JWT filter reads `Authorization: Bearer <token>`.
