@@ -11,7 +11,7 @@
 	<groupId>com.aliya</groupId>
 	<artifactId>fetchjobapp</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>fetchjobapp</name>
+	<name>workly</name>
 	<description>search jobs</description>
 	<properties>
 		<java.version>21</java.version>
