@@ -9,7 +9,7 @@
 		<relativePath/>
 	</parent>
 	<groupId>com.aliya</groupId>
-	<artifactId>fetchjobapp</artifactId>
+	<artifactId>workly</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>workly</name>
 	<description>search jobs</description>
