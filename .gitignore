@@ -36,5 +36,5 @@ build/
 .env
 
 ##docs
-.md
+*.md
 !README.md
