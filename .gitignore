@@ -19,6 +19,7 @@ target/
 *.iml
 *.ipr
 
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
@@ -33,3 +34,7 @@ build/
 .vscode/
 
 .env
+
+##docs
+.md
+!README.md

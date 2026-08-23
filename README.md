@@ -15,6 +15,7 @@ for exactly what exists today vs. the target design.
 - [docs/PROGRESS.md](docs/PROGRESS.md) — dated changelog of actual work done
 - [docs/DECISIONS.md](docs/DECISIONS.md) — design decisions and why
 - [docs/AUTH_GUIDE.md](docs/AUTH_GUIDE.md) — JWT / OAuth2 / RBAC concepts, written for a first pass at auth
+- [docs/GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md) — fetch/pull/merge/PR cheat sheet and the branch loop used here
 
 ## Running locally
 
