@@ -1,5 +1,6 @@
 package com.aliya.workly.company;
 
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,20 +23,20 @@ public class CompanyController {
         return ResponseEntity.ok(companyService.findAll());
     }
 
-    @GetMapping("/company/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<CompanyDTO> findById(@PathVariable Long id) {
         return ResponseEntity.ok(companyService.findById(id));
     }
 
     @PostMapping
-    public ResponseEntity<CompanyDTO> createCompany(@RequestBody CompanyDTO companyDTO) {
+    public ResponseEntity<CompanyDTO> createCompany(@Valid @RequestBody CompanyDTO companyDTO) { // CHANGED: added @Valid (Phase 0 cleanup)
 
         CompanyDTO created = companyService.save(companyDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PutMapping("/company/{id}")
-    public ResponseEntity<CompanyDTO> updateCompany(@PathVariable Long id, @RequestBody CompanyDTO companyDTO) {
+    @PutMapping("/{id}")
+    public ResponseEntity<CompanyDTO> updateCompany(@PathVariable Long id, @Valid @RequestBody CompanyDTO companyDTO) { // CHANGED: added @Valid (Phase 0 cleanup)
 
         CompanyDTO updated = companyService.update(id, companyDTO);
 
@@ -47,10 +48,10 @@ public class CompanyController {
         return ResponseEntity.ok(updated);
     }
 
-    @DeleteMapping("/company/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCompany(@PathVariable Long id) {
 
-        boolean deleted = companyService.deleteById(id);
+        boolean  deleted = companyService.deleteById(id);
 
         if (!deleted) {
 

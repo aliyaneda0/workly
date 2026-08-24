@@ -1,13 +1,17 @@
 package com.aliya.workly.company;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class CompanyDTO {
 
     private Long id;
 
+    @NotBlank(message = "Company name is required")
     private String companyName;
 
     private String description;
 
+    @NotBlank(message = "Location is required") // CHANGED: added validation (Phase 0 cleanup)
     private String Location;
 
 

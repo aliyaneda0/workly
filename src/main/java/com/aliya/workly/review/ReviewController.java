@@ -1,6 +1,7 @@
 package com.aliya.workly.review;
 
 
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +35,7 @@ public class ReviewController {
 
     @PostMapping
     public ResponseEntity<ReviewDTO> createReview(@PathVariable Long companyId,
-                                                  @RequestBody ReviewDTO reviewDTO) {
+                                                  @Valid @RequestBody ReviewDTO reviewDTO) { // CHANGED: added @Valid (Phase 0 cleanup)
         ReviewDTO created = reviewService.save(companyId, reviewDTO);
         if (created == null) {
             return ResponseEntity.notFound().build();
@@ -45,7 +46,7 @@ public class ReviewController {
     @PutMapping("/{reviewId}")
     public ResponseEntity<ReviewDTO> updateReview(@PathVariable Long companyId,
                                                   @PathVariable Long reviewId,
-                                                  @RequestBody ReviewDTO reviewDTO) {
+                                                  @Valid @RequestBody ReviewDTO reviewDTO) { // CHANGED: added @Valid (Phase 0 cleanup)
         ReviewDTO updated = reviewService.update(companyId, reviewId, reviewDTO);
         if (updated == null) {
             return ResponseEntity.notFound().build();

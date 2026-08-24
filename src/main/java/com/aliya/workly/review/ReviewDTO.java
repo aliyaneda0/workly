@@ -1,13 +1,22 @@
 package com.aliya.workly.review;
 
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+
 public class ReviewDTO {
 
     private Long id;
 
+    // CHANGED: added validation (Phase 0 cleanup — see docs/ROADMAP.md)
+    @NotBlank(message = "Review title is required")
     private String title;
 
     private String description;
 
+    // CHANGED: added validation (Phase 0 cleanup — see docs/ROADMAP.md)
+    @DecimalMin(value = "0.0", message = "Rating must be at least 0")
+    @DecimalMax(value = "5.0", message = "Rating must be at most 5")
     private double rating;
 
     private Long companyId;

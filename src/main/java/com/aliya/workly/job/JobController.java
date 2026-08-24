@@ -29,7 +29,7 @@ public class JobController {
 
         return jobService.getJobById(id);
     }
-    @PostMapping("/post/job")
+    @PostMapping
     public ResponseEntity<JobDTO> createJob(@Valid @RequestBody JobDTO jobDTO){
 
          JobDTO created = jobService.createJob(jobDTO);
@@ -38,7 +38,7 @@ public class JobController {
 
          }
 
-    @DeleteMapping("/job/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteJob(@PathVariable Long id) {
 
         boolean deleted = jobService.deleteById(id);
