@@ -20,10 +20,10 @@ public class Company {
 
     private String Location;
 
-    @OneToMany
+    @OneToMany(mappedBy = "company")
     private List<Job> jobs;
 
-    @OneToMany
+    @OneToMany(mappedBy = "company")
     private List<Review> reviews;
 
 
