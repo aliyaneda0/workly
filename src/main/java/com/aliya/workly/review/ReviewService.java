@@ -7,9 +7,12 @@ public interface ReviewService {
 
     ReviewDTO findById(Long companyId, Long reviewId);
 
-    ReviewDTO save(Long companyId, ReviewDTO reviewDTO);
+    // CHANGED: acting user comes from the token, not the DTO (see security checklist)
+    ReviewDTO save(Long companyId, ReviewDTO reviewDTO, Long reviewedByUserId);
 
-    ReviewDTO update(Long companyId, Long reviewId, ReviewDTO reviewDTO);
+    // CHANGED: actingUserId/isAdmin enforce "own review or admin" — see the IDOR entry
+    // in the security checklist. The DTO's own reviewedBy field is never trusted for this.
+    ReviewDTO update(Long companyId, Long reviewId, ReviewDTO reviewDTO, Long actingUserId, boolean isAdmin);
 
-    boolean deleteById(Long companyId, Long reviewId);
+    boolean deleteById(Long companyId, Long reviewId, Long actingUserId, boolean isAdmin);
 }

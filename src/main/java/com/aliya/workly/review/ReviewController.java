@@ -1,6 +1,7 @@
 package com.aliya.workly.review;
 
 
+import com.aliya.workly.security.SecurityUtils;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,9 +35,11 @@ public class ReviewController {
     }
 
     @PostMapping
+    // any authenticated user may write a review (APPLICANT typical, not exclusive — see AUTH_GUIDE.md)
     public ResponseEntity<ReviewDTO> createReview(@PathVariable Long companyId,
                                                   @Valid @RequestBody ReviewDTO reviewDTO) { // CHANGED: added @Valid (Phase 0 cleanup)
-        ReviewDTO created = reviewService.save(companyId, reviewDTO);
+        // CHANGED: reviewedBy comes from the authenticated caller, not reviewDTO
+        ReviewDTO created = reviewService.save(companyId, reviewDTO, SecurityUtils.currentUserId());
         if (created == null) {
             return ResponseEntity.notFound().build();
         }
@@ -47,7 +50,9 @@ public class ReviewController {
     public ResponseEntity<ReviewDTO> updateReview(@PathVariable Long companyId,
                                                   @PathVariable Long reviewId,
                                                   @Valid @RequestBody ReviewDTO reviewDTO) { // CHANGED: added @Valid (Phase 0 cleanup)
-        ReviewDTO updated = reviewService.update(companyId, reviewId, reviewDTO);
+        // CHANGED: service enforces own-review-or-admin using the ACTING user, not the DTO
+        ReviewDTO updated = reviewService.update(companyId, reviewId, reviewDTO,
+                SecurityUtils.currentUserId(), SecurityUtils.isAdmin());
         if (updated == null) {
             return ResponseEntity.notFound().build();
         }
@@ -57,7 +62,9 @@ public class ReviewController {
     @DeleteMapping("/{reviewId}")
     public ResponseEntity<Void> deleteReview(@PathVariable Long companyId,
                                              @PathVariable Long reviewId) {
-        boolean deleted = reviewService.deleteById(companyId, reviewId);
+        // CHANGED: own-review-or-admin, same as updateReview
+        boolean deleted = reviewService.deleteById(companyId, reviewId,
+                SecurityUtils.currentUserId(), SecurityUtils.isAdmin());
         if (!deleted) {
             return ResponseEntity.notFound().build();
         }

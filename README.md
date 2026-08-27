@@ -8,12 +8,7 @@ OAuth2 + JWT + role-based access control layered on top.
 
 ## Docs
 
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — current state of the code vs. the target end-state
-- [ROADMAP.md](docs/ROADMAP.md) — phased task list, current status
-- [PROGRESS.md](docs/PROGRESS.md) — dated changelog of what's actually been done
-- [AUTH_GUIDE.md](docs/AUTH_GUIDE.md) — JWT/OAuth2/RBAC concepts, specific to this project
-- [DECISIONS.md](docs/DECISIONS.md) — design decisions and why
-- [GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md) — the fetch/pull/merge/PR loop used on this project
+- 
 
 (These docs live locally under `docs/` and aren't tracked in git — see `.gitignore`.)
 

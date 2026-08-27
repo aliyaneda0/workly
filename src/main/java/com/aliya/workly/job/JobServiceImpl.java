@@ -25,11 +25,12 @@ public class JobServiceImpl implements JobService {
     @Override
     @Transactional
     // CORRECT — fetches company, throws 404 if missing
-    public JobDTO createJob(JobDTO jobDTO) {
+    public JobDTO createJob(JobDTO jobDTO, Long postedByUserId) {
         Company company = companyRepository.findById(jobDTO.getCompanyId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Company not found with id: " + jobDTO.getCompanyId()));
         Job job = toEntity(jobDTO, company);  // ← toEntity takes dto + company
+        job.setPostedBy(postedByUserId); // CHANGED: from the authenticated caller, never from jobDTO
         return toDTO(jobRepository.save(job));
     }
 

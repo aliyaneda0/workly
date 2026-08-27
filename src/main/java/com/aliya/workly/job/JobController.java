@@ -1,5 +1,6 @@
 package com.aliya.workly.job;
 
+import com.aliya.workly.security.SecurityUtils;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,9 +31,11 @@ public class JobController {
         return jobService.getJobById(id);
     }
     @PostMapping
+    // role check (COMPANY/ADMIN) enforced in SecurityConfig at the filter-chain level
     public ResponseEntity<JobDTO> createJob(@Valid @RequestBody JobDTO jobDTO){
 
-         JobDTO created = jobService.createJob(jobDTO);
+         // CHANGED: postedBy comes from the authenticated caller, not jobDTO — see security checklist
+         JobDTO created = jobService.createJob(jobDTO, SecurityUtils.currentUserId());
 
           return ResponseEntity.status(HttpStatus.CREATED).body(created);
 
