@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: workly-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-workly}
+      POSTGRES_USER: ${POSTGRES_USER:-workly}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-workly}
+    ports:
+      - "5432:5432" # host access for a DB client — drop this line to keep it container-only
+    volumes:
+      - workly-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-workly} -d ${POSTGRES_DB:-workly}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - workly-net
+
+  app:
+    # Reuses the existing Dockerfile — still expects target/*.jar to exist, same as your
+    # already-built image. Run `./mvnw package -DskipTests` before `docker compose up --build`,
+    # or skip the build entirely and point this at your existing image instead:
+    #   image: workly:latest      (replace with your actual name:tag — see `docker images`)
+    build: .
+    container_name: workly-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # "postgres" below is the service name above — Docker's internal DNS resolves it to the
+      # container's address on workly-net, no host IP or port-mapping needed between the two.
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-workly}
+      DATABASE_USERNAME: ${POSTGRES_USER:-workly}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-workly}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8080:8080"
+    networks:
+      - workly-net
+
+volumes:
+  workly-pgdata:
+
+networks:
+  workly-net:
+    driver: bridge

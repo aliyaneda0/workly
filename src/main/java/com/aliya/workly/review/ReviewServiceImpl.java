@@ -3,6 +3,7 @@ package com.aliya.workly.review;
 
 import com.aliya.workly.company.Company;
 import com.aliya.workly.company.CompanyRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -38,19 +39,20 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Override
-    public ReviewDTO save(Long companyId, ReviewDTO reviewDTO) {
+    public ReviewDTO save(Long companyId, ReviewDTO reviewDTO, Long reviewedByUserId) {
         Optional<Company> optionalCompany = companyRepository.findById(companyId);
         if (optionalCompany.isEmpty()) {
             return null;
         }
         Review review = toEntity(reviewDTO);
         review.setCompany(optionalCompany.get());
+        review.setReviewedBy(reviewedByUserId); // CHANGED: from the authenticated caller, never from reviewDTO
         Review saved = reviewRepository.save(review);
         return toDTO(saved);
     }
 
     @Override
-    public ReviewDTO update(Long companyId, Long reviewId, ReviewDTO reviewDTO) {
+    public ReviewDTO update(Long companyId, Long reviewId, ReviewDTO reviewDTO, Long actingUserId, boolean isAdmin) {
         Optional<Review> optionalReview = reviewRepository.findById(reviewId);
         if (optionalReview.isEmpty()) {
             return null;
@@ -59,6 +61,11 @@ public class ReviewServiceImpl implements ReviewService{
         if (review.getCompany() == null || !review.getCompany().getId().equals(companyId)) {
             return null;
         }
+        // CHANGED: ownership check against the EXISTING review's reviewedBy — never trust
+        // reviewDTO's own reviewedBy for this, that's the same mass-assignment trap as
+        // JobDTO.postedBy. See the IDOR entry in the security checklist.
+        requireOwnerOrAdmin(review, actingUserId, isAdmin);
+
         review.setTitle(reviewDTO.getTitle());
         review.setDescription(reviewDTO.getDescription());
         review.setRating(reviewDTO.getRating());
@@ -67,7 +74,7 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Override
-    public boolean deleteById(Long companyId, Long reviewId) {
+    public boolean deleteById(Long companyId, Long reviewId, Long actingUserId, boolean isAdmin) {
         Optional<Review> optionalReview = reviewRepository.findById(reviewId);
         if (optionalReview.isEmpty()) {
             return false;
@@ -76,19 +83,30 @@ public class ReviewServiceImpl implements ReviewService{
         if (review.getCompany() == null || !review.getCompany().getId().equals(companyId)) {
             return false;
         }
+        requireOwnerOrAdmin(review, actingUserId, isAdmin);
+
         reviewRepository.deleteById(reviewId);
         return true;
     }
 
+    private void requireOwnerOrAdmin(Review review, Long actingUserId, boolean isAdmin) {
+        boolean isOwner = review.getReviewedBy() != null && review.getReviewedBy().equals(actingUserId);
+        if (!isAdmin && !isOwner) {
+            throw new AccessDeniedException("Only the review's author or an admin can do that");
+        }
+    }
+
     private ReviewDTO toDTO(Review review) {
         Long companyId = review.getCompany() != null ? review.getCompany().getId() : null;
-        return new ReviewDTO(
+        ReviewDTO dto = new ReviewDTO(
                 review.getId(),
                 review.getTitle(),
                 review.getDescription(),
                 review.getRating(),
                 companyId
         );
+        dto.setReviewedBy(review.getReviewedBy()); // CHANGED: constructor didn't carry this before
+        return dto;
     }
 
     private Review toEntity(ReviewDTO dto) {

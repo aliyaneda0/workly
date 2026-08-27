@@ -1,0 +1,9 @@
+.git
+.idea
+.vscode
+docs/
+*.md
+!README.md
+target/
+.env
+.env.example

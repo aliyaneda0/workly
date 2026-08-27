@@ -70,7 +70,7 @@ class JobServiceImplTest {
 
         when(jobRepository.save(any(Job.class))).thenReturn(savedJob);
 
-        JobDTO result = jobService.createJob(input);
+        JobDTO result = jobService.createJob(input, 42L); // CHANGED: createJob now takes the acting user's id
 
         assertThat(result.getTitle()).isEqualTo("Java Developer");
         verify(jobRepository, times(1)).save(any(Job.class));
