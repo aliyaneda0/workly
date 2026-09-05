@@ -41,6 +41,15 @@ public class AuthController {
         return ResponseEntity.ok(authService.refresh(req.getRefreshToken()));
     }
 
+    // Revokes the refresh-token family this token belongs to. 204 even if the token is already
+    // unknown/dead — logout is idempotent, and telling a caller "that token wasn't valid" leaks
+    // nothing useful anyway.
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshRequest req) {
+        authService.logout(req.getRefreshToken());
+        return ResponseEntity.noContent().build();
+    }
+
     // Convenience endpoint for testing the whole flow with a real token — see Blueprint Section 12.
     @GetMapping("/me")
     public ResponseEntity<UserResponse> me() {
