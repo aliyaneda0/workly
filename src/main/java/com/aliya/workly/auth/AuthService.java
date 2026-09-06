@@ -86,6 +86,20 @@ public class AuthService {
         refreshTokenService.revokeFamilyOf(refreshToken);
     }
 
+    @Transactional
+    public AuthResponse loginWithOAuth(AuthProvider provider, String email, String fullName) {
+        String normalized = email.trim().toLowerCase();
+        User user = userRepository.findByEmail(normalized).orElseGet(() -> {
+            User created = new User();
+            created.setEmail(normalized);
+            created.setFullName(fullName);
+            created.setRole(Role.APPLICANT);
+            created.setAuthProvider(provider);
+            return userRepository.save(created);
+        });
+        return issueTokens(user);
+    }
+
     private AuthResponse issueTokens(User user) {
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = refreshTokenService.issueForNewLogin(user.getId());
