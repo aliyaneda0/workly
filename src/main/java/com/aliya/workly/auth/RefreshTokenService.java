@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HexFormat;
@@ -75,6 +76,16 @@ public class RefreshTokenService {
     public void revokeFamilyOf(String presentedToken) {
         repository.findByTokenHash(hash(presentedToken))
                 .ifPresent(t -> repository.revokeFamily(t.getFamilyId(), Instant.now()));
+    }
+
+    // Housekeeping (RefreshTokenCleanupJob): delete rows whose token expired more than
+    // `retention` ago. We don't delete the instant a token expires: rotate() checks
+    // used/revoked *before* expiry, so a token that was used and is then replayed still trips
+    // family revocation even after it's expired. The retention window is how long that
+    // replay-detection signal outlives the token. Returns the number of rows deleted.
+    @Transactional
+    public int deleteExpiredOlderThan(Duration retention) {
+        return repository.deleteExpiredBefore(Instant.now().minus(retention));
     }
 
     private String mint(Long userId, String familyId) {

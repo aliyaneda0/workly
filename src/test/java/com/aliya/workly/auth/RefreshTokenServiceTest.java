@@ -8,12 +8,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -120,6 +123,21 @@ class RefreshTokenServiceTest {
         service.revokeFamilyOf("a-valid-token");
 
         verify(repository).revokeFamily(eq("fam-4"), any(Instant.class));
+    }
+
+    @Test
+    void deleteExpiredOlderThan_deletesRowsPastACutoffThatIsRetentionAgo() {
+        when(repository.deleteExpiredBefore(any())).thenReturn(4);
+
+        int deleted = service.deleteExpiredOlderThan(Duration.ofDays(7));
+
+        assertThat(deleted).isEqualTo(4);
+
+        ArgumentCaptor<Instant> cutoff = ArgumentCaptor.forClass(Instant.class);
+        verify(repository).deleteExpiredBefore(cutoff.capture());
+        // cutoff must be ~7 days in the past — never "now" (that would wipe still-useful rows)
+        assertThat(cutoff.getValue())
+                .isCloseTo(Instant.now().minus(Duration.ofDays(7)), within(1, ChronoUnit.MINUTES));
     }
 
     private static RefreshToken usableToken(String familyId, long userId) {

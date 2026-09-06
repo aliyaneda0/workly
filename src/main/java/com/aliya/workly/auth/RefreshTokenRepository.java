@@ -24,7 +24,7 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     int revokeAllForUser(@Param("userId") Long userId, @Param("now") Instant now);
 
     // housekeeping: drop rows that expired long ago so the table doesn't grow forever.
-    // Not scheduled yet — a @Scheduled sweep is a small follow-up once @EnableScheduling is on.
+    // Driven by RefreshTokenCleanupJob on a schedule. Returns the row count deleted.
     @Modifying
     @Query("delete from RefreshToken t where t.expiresAt < :cutoff")
     int deleteExpiredBefore(@Param("cutoff") Instant cutoff);
