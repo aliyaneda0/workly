@@ -9,8 +9,6 @@ import com.aliya.workly.user.AuthProvider;
 import com.aliya.workly.user.Role;
 import com.aliya.workly.user.User;
 import com.aliya.workly.user.UserRepository;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,11 +20,14 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService,
+                       RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Transactional
@@ -67,28 +68,27 @@ public class AuthService {
     }
 
     public AuthResponse refresh(String refreshToken) {
-        Claims claims;
-        try {
-            claims = jwtService.parseRefreshToken(refreshToken);
-        } catch (JwtException | IllegalArgumentException e) {
-            throw new BadCredentialsException("Invalid or expired refresh token");
-        }
+        // rotate() does all the validation (exists? used? revoked? expired?) and replay handling,
+        // and hands back a fresh refresh token in the same family.
+        RefreshTokenService.Rotation rotation = refreshTokenService.rotate(refreshToken);
 
-        Long userId = jwtService.extractUserId(claims);
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(rotation.userId())
                 .orElseThrow(() -> new BadCredentialsException("Invalid or expired refresh token"));
 
-        // NOTE: this reissues a refresh token but does not yet revoke the old one — there's no
-        // server-side token store. That means reuse-detection (the "important" item in the
-        // security checklist under JWT & refresh tokens) is NOT implemented yet. Tracked as a
-        // follow-up: a RefreshToken entity storing a hash per issued token, checked and rotated
-        // here. Fine for local development, not for a real deployment.
-        return issueTokens(user);
+        String accessToken = jwtService.generateAccessToken(user);
+        return new AuthResponse(accessToken, rotation.newRefreshToken(), jwtService.getAccessTtlSeconds());
+    }
+
+    // Logout = give up the refresh token you hold; we revoke its whole family so no descendant
+    // of that login works anymore. The access token still lives until it expires (minutes) —
+    // that's the accepted trade-off of stateless access tokens.
+    public void logout(String refreshToken) {
+        refreshTokenService.revokeFamilyOf(refreshToken);
     }
 
     private AuthResponse issueTokens(User user) {
         String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
+        String refreshToken = refreshTokenService.issueForNewLogin(user.getId());
         return new AuthResponse(accessToken, refreshToken, jwtService.getAccessTtlSeconds());
     }
 }

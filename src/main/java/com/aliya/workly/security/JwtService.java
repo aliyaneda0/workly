@@ -12,10 +12,11 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-// Signs and verifies both access and refresh tokens (HS256, one shared secret — see
-// DECISIONS.md ADR-001). Every token carries a "typ" claim (access/refresh) so a stolen
-// refresh token can't be replayed as an access token — see the security checklist entry
-// on token-type confusion in the Workly Auth Blueprint, Section 14.
+// Signs and verifies access tokens (HS256, one shared secret — see DECISIONS.md ADR-001).
+// Every token carries a "typ":"access" claim, so even if some other kind of signed token
+// leaks into an Authorization header it won't be accepted here — see the security checklist
+// entry on token-type confusion in the Workly Auth Blueprint, Section 14. Refresh tokens are
+// NOT JWTs — they're opaque handles managed by RefreshTokenService.
 @Service
 public class JwtService {
 
@@ -23,7 +24,6 @@ public class JwtService {
     private static final String CLAIM_UID = "uid";
     private static final String CLAIM_TYPE = "typ";
     private static final String TYPE_ACCESS = "access";
-    private static final String TYPE_REFRESH = "refresh";
 
     @Value("${app.jwt.secret}")
     private String secret;
@@ -31,19 +31,12 @@ public class JwtService {
     @Value("${app.jwt.access-token-ttl-seconds}")
     private long accessTtlSeconds;
 
-    @Value("${app.jwt.refresh-token-ttl-seconds}")
-    private long refreshTtlSeconds;
-
     public long getAccessTtlSeconds() {
         return accessTtlSeconds;
     }
 
     public String generateAccessToken(User user) {
         return buildToken(user, TYPE_ACCESS, accessTtlSeconds);
-    }
-
-    public String generateRefreshToken(User user) {
-        return buildToken(user, TYPE_REFRESH, refreshTtlSeconds);
     }
 
     private String buildToken(User user, String type, long ttlSeconds) {
@@ -68,12 +61,6 @@ public class JwtService {
     public Claims parseAccessToken(String token) {
         Claims claims = parse(token);
         requireType(claims, TYPE_ACCESS);
-        return claims;
-    }
-
-    public Claims parseRefreshToken(String token) {
-        Claims claims = parse(token);
-        requireType(claims, TYPE_REFRESH);
         return claims;
     }
 
