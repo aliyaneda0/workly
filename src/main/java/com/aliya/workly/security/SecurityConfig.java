@@ -44,6 +44,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/jobs/**", "/companies/**", "/company/*/reviews/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/**").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.POST, "/jobs").hasAnyRole("COMPANY", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/jobs/**").hasAnyRole("COMPANY", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/companies").hasRole("ADMIN")
