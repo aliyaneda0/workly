@@ -1,5 +1,6 @@
 package com.aliya.workly.job;
 
+import com.aliya.workly.common.PageResponse;
 import com.aliya.workly.company.Company;
 import com.aliya.workly.company.CompanyRepository;
 import com.aliya.workly.exception.ResourceNotFoundException;
@@ -8,7 +9,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -74,6 +80,28 @@ class JobServiceImplTest {
 
         assertThat(result.getTitle()).isEqualTo("Java Developer");
         verify(jobRepository, times(1)).save(any(Job.class));
+    }
+
+    @Test
+    void getAllJobs_mapsPageOfJobsToPageResponseOfDTOs() {
+        Company company = new Company();
+        company.setId(1L);
+
+        Job job = new Job();
+        job.setId(1L);
+        job.setTitle("Backend Engineer");
+        job.setCompany(company);
+
+        Pageable pageable = PageRequest.of(0, 20);
+        when(jobRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(job), pageable, 1));
+
+        JobSearchCriteria criteria = new JobSearchCriteria(null, null, null, null, null);
+        PageResponse<JobDTO> result = jobService.getAllJobs(criteria, pageable);
+
+        assertThat(result.content().size()).isEqualTo(1);
+        assertThat(result.content().get(0).getTitle()).isEqualTo("Backend Engineer");
+        assertThat(result.totalElements()).isEqualTo(1);
     }
 
     // ✅ bogus private verify() method removed

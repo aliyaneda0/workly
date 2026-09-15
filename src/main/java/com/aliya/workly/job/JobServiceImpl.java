@@ -1,13 +1,14 @@
 package com.aliya.workly.job;
 
 
+import com.aliya.workly.common.PageResponse;
 import com.aliya.workly.company.Company;
 import com.aliya.workly.company.CompanyRepository;
 import com.aliya.workly.exception.ResourceNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class JobServiceImpl implements JobService {
@@ -35,11 +36,9 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public List<JobDTO> getAllJobs() {
-        return jobRepository.findAll()
-                .stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+    public PageResponse<JobDTO> getAllJobs(JobSearchCriteria criteria, Pageable pageable) {
+        Page<Job> jobs = jobRepository.findAll(JobSpecifications.fromCriteria(criteria), pageable);
+        return PageResponse.of(jobs.map(this::toDTO));
     }
 
     @Override

@@ -1,12 +1,15 @@
 package com.aliya.workly.job;
 
+import com.aliya.workly.common.PageResponse;
 import com.aliya.workly.security.SecurityUtils;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/jobs")
@@ -20,9 +23,16 @@ public class JobController {
         this.jobService = jobService;
     }
     @GetMapping
-    public List<JobDTO> getAllJobs(){
+    public PageResponse<JobDTO> getAllJobs(
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) JobStatus status,
+            @RequestParam(required = false) BigDecimal minSalary,
+            @RequestParam(required = false) BigDecimal maxSalary,
+            @RequestParam(required = false) String keyword,
+            @PageableDefault(size = 20, sort = "id") Pageable pageable){
 
-        return jobService.getAllJobs();
+        JobSearchCriteria criteria = new JobSearchCriteria(location, status, minSalary, maxSalary, keyword);
+        return jobService.getAllJobs(criteria, pageable);
     }
 
     @GetMapping("/{id}")
