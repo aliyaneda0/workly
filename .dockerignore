@@ -4,6 +4,7 @@
 docs/
 *.md
 !README.md
-target/
+target/*
+!target/*.jar
 .env
 .env.example
