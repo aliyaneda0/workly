@@ -97,7 +97,7 @@ class JobServiceImplTest {
                 .thenReturn(new PageImpl<>(List.of(job), pageable, 1));
 
         JobSearchCriteria criteria = new JobSearchCriteria(null, null, null, null, null);
-        PageResponse<JobDTO> result = jobService.getAllJobs(criteria, pageable);
+        PageResponse<JobDTO> result = jobService.getAllJobs(criteria, pageable, null, false);
 
         assertThat(result.content().size()).isEqualTo(1);
         assertThat(result.content().get(0).getTitle()).isEqualTo("Backend Engineer");
