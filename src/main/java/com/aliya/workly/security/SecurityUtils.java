@@ -13,9 +13,19 @@ public class SecurityUtils {
     }
 
     public static AuthPrincipal currentPrincipal() {
+        AuthPrincipal principal = currentPrincipalOrNull();
+        if (principal == null) {
+            throw new IllegalStateException("No authenticated user in the current request");
+        }
+        return principal;
+    }
+
+    // Null, not a throw — for endpoints that permitAll and serve both anonymous and
+    // authenticated callers differently (e.g. GET /jobs scoping DRAFT visibility).
+    public static AuthPrincipal currentPrincipalOrNull() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !(auth.getPrincipal() instanceof AuthPrincipal principal)) {
-            throw new IllegalStateException("No authenticated user in the current request");
+            return null;
         }
         return principal;
     }

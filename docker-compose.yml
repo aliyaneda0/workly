@@ -8,7 +8,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-workly}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-workly}
     ports:
-      - "5432:5432" # host access for a DB client — drop this line to keep it container-only
+      # Host port 5433, not 5432 — this machine has a native PostgreSQL Windows service already
+      # bound to 5432, and Docker's port-forward silently loses that conflict. Container-internal
+      # port stays 5432; the app talks to it as "postgres:5432" over workly-net either way, so
+      # this only affects connecting a DB client (or running the app/tests outside Docker) from
+      # the host. Drop this line entirely to keep Postgres container-only.
+      - "5433:5432"
     volumes:
       - workly-pgdata:/var/lib/postgresql/data
     healthcheck:
