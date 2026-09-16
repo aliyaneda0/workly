@@ -36,8 +36,8 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public PageResponse<JobDTO> getAllJobs(JobSearchCriteria criteria, Pageable pageable) {
-        Page<Job> jobs = jobRepository.findAll(JobSpecifications.fromCriteria(criteria), pageable);
+    public PageResponse<JobDTO> getAllJobs(JobSearchCriteria criteria, Pageable pageable, Long callerId, boolean isAdmin) {
+        Page<Job> jobs = jobRepository.findAll(JobSpecifications.fromCriteria(criteria, callerId, isAdmin), pageable);
         return PageResponse.of(jobs.map(this::toDTO));
     }
 

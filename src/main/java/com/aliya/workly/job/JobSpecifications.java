@@ -6,7 +6,7 @@ public final class JobSpecifications {
 
     private JobSpecifications() {}
 
-    public static Specification<Job> fromCriteria(JobSearchCriteria criteria) {
+    public static Specification<Job> fromCriteria(JobSearchCriteria criteria, Long callerId, boolean isAdmin) {
         return Specification.allOf(
                 locationContains(criteria.location()),
                 hasStatus(criteria.status()),
@@ -14,8 +14,23 @@ public final class JobSpecifications {
                 // requested [minSalary, maxSalary] window at all, not only if it sits fully inside it
                 maxSalaryAtLeast(criteria.minSalary()),
                 minSalaryAtMost(criteria.maxSalary()),
-                keywordInTitleOrDescription(criteria.keyword())
+                keywordInTitleOrDescription(criteria.keyword()),
+                visibleTo(callerId, isAdmin)
         );
+    }
+
+    // DRAFT jobs are the poster's own listings-in-progress, not public postings. Admins see
+    // everything; everyone else sees non-DRAFT jobs plus DRAFT jobs they themselves posted.
+    // Combined via AND with an explicit ?status=DRAFT filter, this also means a non-owner
+    // asking for DRAFT jobs just gets zero results instead of needing a separate rejection path.
+    private static Specification<Job> visibleTo(Long callerId, boolean isAdmin) {
+        if (isAdmin) return null;
+        return (root, query, cb) -> {
+            var notDraft = cb.notEqual(root.get("status"), JobStatus.DRAFT);
+            if (callerId == null) return notDraft;
+            var isOwnPosting = cb.equal(root.get("postedBy"), callerId);
+            return cb.or(notDraft, isOwnPosting);
+        };
     }
 
     private static Specification<Job> locationContains(String location) {

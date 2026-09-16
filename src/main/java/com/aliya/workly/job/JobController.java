@@ -1,7 +1,9 @@
 package com.aliya.workly.job;
 
 import com.aliya.workly.common.PageResponse;
+import com.aliya.workly.security.AuthPrincipal;
 import com.aliya.workly.security.SecurityUtils;
+import com.aliya.workly.user.Role;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -32,7 +34,12 @@ public class JobController {
             @PageableDefault(size = 20, sort = "id") Pageable pageable){
 
         JobSearchCriteria criteria = new JobSearchCriteria(location, status, minSalary, maxSalary, keyword);
-        return jobService.getAllJobs(criteria, pageable);
+        // GET /jobs is permitAll — an anonymous caller has no AuthPrincipal, so this can't use
+        // SecurityUtils.currentUserId()/isAdmin() (those throw when unauthenticated).
+        AuthPrincipal principal = SecurityUtils.currentPrincipalOrNull();
+        Long callerId = principal != null ? principal.getId() : null;
+        boolean isAdmin = principal != null && principal.getRole() == Role.ADMIN;
+        return jobService.getAllJobs(criteria, pageable, callerId, isAdmin);
     }
 
     @GetMapping("/{id}")
