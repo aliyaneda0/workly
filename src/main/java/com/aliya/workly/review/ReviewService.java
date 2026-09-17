@@ -1,9 +1,10 @@
 package com.aliya.workly.review;
 
-import java.util.List;
+import com.aliya.workly.common.PageResponse;
+import org.springframework.data.domain.Pageable;
 
 public interface ReviewService {
-    List<ReviewDTO> findAllByCompanyId(Long companyId);
+    PageResponse<ReviewDTO> findAllByCompanyId(Long companyId, Pageable pageable);
 
     ReviewDTO findById(Long companyId, Long reviewId);
 

@@ -1,14 +1,15 @@
 package com.aliya.workly.review;
 
 
+import com.aliya.workly.common.PageResponse;
 import com.aliya.workly.company.Company;
 import com.aliya.workly.company.CompanyRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ReviewServiceImpl implements ReviewService{
@@ -23,11 +24,9 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Override
-    public List<ReviewDTO> findAllByCompanyId(Long companyId) {
-        return reviewRepository.findByCompanyId(companyId)
-                .stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+    public PageResponse<ReviewDTO> findAllByCompanyId(Long companyId, Pageable pageable) {
+        Page<Review> reviews = reviewRepository.findByCompanyId(companyId, pageable);
+        return PageResponse.of(reviews.map(this::toDTO));
     }
 
     @Override

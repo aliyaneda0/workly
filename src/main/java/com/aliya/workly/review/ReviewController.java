@@ -1,13 +1,14 @@
 package com.aliya.workly.review;
 
 
+import com.aliya.workly.common.PageResponse;
 import com.aliya.workly.security.SecurityUtils;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/company/{companyId}/reviews")
@@ -20,8 +21,9 @@ public class ReviewController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ReviewDTO>> getAllReviews(@PathVariable Long companyId) {
-        return ResponseEntity.ok(reviewService.findAllByCompanyId(companyId));
+    public PageResponse<ReviewDTO> getAllReviews(@PathVariable Long companyId,
+            @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        return reviewService.findAllByCompanyId(companyId, pageable);
     }
 
     @GetMapping("/{reviewId}")

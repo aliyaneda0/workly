@@ -1,5 +1,6 @@
 package com.aliya.workly.review;
 
+import com.aliya.workly.common.PageResponse;
 import com.aliya.workly.company.Company;
 import com.aliya.workly.company.CompanyRepository;
 import org.junit.jupiter.api.Test;
@@ -7,6 +8,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
@@ -46,14 +50,17 @@ class ReviewServiceImplTest {
     }
 
     @Test
-    void findAllByCompanyId_mapsEveryReviewToDTO() {
+    void findAllByCompanyId_mapsPageOfReviewsToPageResponseOfDTOs() {
         Review review = reviewOwnedBy(1L, 5L, 42L);
-        when(reviewRepository.findByCompanyId(5L)).thenReturn(List.of(review));
+        Pageable pageable = PageRequest.of(0, 20);
+        when(reviewRepository.findByCompanyId(5L, pageable))
+                .thenReturn(new PageImpl<>(List.of(review), pageable, 1));
 
-        List<ReviewDTO> result = reviewService.findAllByCompanyId(5L);
+        PageResponse<ReviewDTO> result = reviewService.findAllByCompanyId(5L, pageable);
 
-        assertThat(result.size()).isEqualTo(1);
-        assertThat(result.get(0).getTitle()).isEqualTo("Original title");
+        assertThat(result.content().size()).isEqualTo(1);
+        assertThat(result.content().get(0).getTitle()).isEqualTo("Original title");
+        assertThat(result.totalElements()).isEqualTo(1);
     }
 
     @Test
