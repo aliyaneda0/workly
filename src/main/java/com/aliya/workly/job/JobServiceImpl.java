@@ -7,8 +7,11 @@ import com.aliya.workly.company.CompanyRepository;
 import com.aliya.workly.exception.ResourceNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 public class JobServiceImpl implements JobService {
@@ -23,10 +26,23 @@ public class JobServiceImpl implements JobService {
         this.companyRepository = companyRepository;
     }
 
+    private void requiredCompanyAccess(Long jobCompanyId,Long callerCompanyId,boolean isAdmin){
+        if(isAdmin) return ;
+        if(callerCompanyId == null || !callerCompanyId.equals(jobCompanyId)){
+             throw new AccessDeniedException("Not your company");
+        }
+    }
+
     @Override
     @Transactional
     // CORRECT — fetches company, throws 404 if missing
-    public JobDTO createJob(JobDTO jobDTO, Long postedByUserId) {
+    // Enforced : Validates the creator belongs to the company they are trying to post for
+    public JobDTO createJob(JobDTO jobDTO, Long postedByUserId, Long callerCompanyId , boolean isAdmin) {
+
+        // Rule : check against request companyId before creating
+        requiredCompanyAccess(jobDTO.getCompanyId(), callerCompanyId, isAdmin);
+
+
         Company company = companyRepository.findById(jobDTO.getCompanyId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Company not found with id: " + jobDTO.getCompanyId()));
@@ -51,10 +67,18 @@ public class JobServiceImpl implements JobService {
 
     @Override
     @Transactional
-    public JobDTO updateJob(Long id, JobDTO jobDTO) {
+
+     // ENFORCED : Loads the database row first, checks ownership, restricts company reassignment to ADMINs
+    public JobDTO updateJob(Long id, JobDTO jobDTO, Long callerCompanyId ,boolean isAdmin) {
+
+         // RULE : Load the job first from database to check actual secure state
+
         Job job = jobRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Job not found with id: " + id));
+
+        // Rule : Check if caller has access to the existing job's company
+        requiredCompanyAccess(job.getCompany().getId(),callerCompanyId , isAdmin);
 
         job.setTitle(jobDTO.getTitle());
         job.setDescription(jobDTO.getDescription());
@@ -64,8 +88,14 @@ public class JobServiceImpl implements JobService {
         if (jobDTO.getStatus() != null) job.setStatus(jobDTO.getStatus());
 
         // if companyId changed, re-fetch and update
-        if (jobDTO.getCompanyId() != null &&
-                !jobDTO.getCompanyId().equals(job.getCompany().getId())) {
+        // Rule : Only ADMIN may change companyId if it is different from the stored row
+
+        if (jobDTO.getCompanyId() != null && !jobDTO.getCompanyId().equals(job.getCompany().getId())) {
+
+            if(!isAdmin){
+                throw new AccessDeniedException("Only admins can reassign a job to a different company");
+            }
+
             Company company = companyRepository.findById(jobDTO.getCompanyId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Company not found with id: " + jobDTO.getCompanyId()));
@@ -77,10 +107,21 @@ public class JobServiceImpl implements JobService {
 
     @Override
     @Transactional
-    public boolean deleteById(Long id) {
+
+    //ENFORCED : Loads the job row first , validates ownership,and only deletes if authorized
+    public boolean deleteById(Long id , Long callerCompanyId , boolean isAdmin) {
+
+        // Rule 4 : Load the job first, then check company access
+
         if (!jobRepository.existsById(id)) {
             throw new ResourceNotFoundException("Job not found with id: " + id);
         }
+
+        Optional<Job> job = jobRepository.findById(id);
+
+        // Check against the secure database row's company id, never request input
+        requiredCompanyAccess(job.get().getCompany().getId(), callerCompanyId, isAdmin);
+
         jobRepository.deleteById(id);
         return true;
     }

@@ -47,21 +47,42 @@ public class JobController {
 
         return jobService.getJobById(id);
     }
+
+    
     @PostMapping
     // role check (COMPANY/ADMIN) enforced in SecurityConfig at the filter-chain level
     public ResponseEntity<JobDTO> createJob(@Valid @RequestBody JobDTO jobDTO){
 
+        // Fetch variables out of the authenticated token context
+        Long currentUserId = SecurityUtils.currentUserId();
+        Long callerCompanyId = SecurityUtils.currentCompanyId();
+        boolean isAdmin = SecurityUtils.isAdmin(); // Adjust method name based on your SecurityUtils helper
+
+
          // CHANGED: postedBy comes from the authenticated caller, not jobDTO — see security checklist
-         JobDTO created = jobService.createJob(jobDTO, SecurityUtils.currentUserId());
+         JobDTO created = jobService.createJob(jobDTO, SecurityUtils.currentUserId(),SecurityUtils.currentCompanyId(),SecurityUtils.isAdmin());
 
           return ResponseEntity.status(HttpStatus.CREATED).body(created);
 
          }
 
+
+    @PutMapping("/{id}")
+    public ResponseEntity<JobDTO> updateJob(@PathVariable Long id, @RequestBody JobDTO jobDTO) {
+        Long callerCompanyId = SecurityUtils.currentCompanyId();
+        boolean isAdmin = SecurityUtils.isAdmin();
+
+        JobDTO updatedJob = jobService.updateJob(id, jobDTO, callerCompanyId, isAdmin);
+        return ResponseEntity.ok(updatedJob);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteJob(@PathVariable Long id) {
 
-        boolean deleted = jobService.deleteById(id);
+        Long callerCompanyId = SecurityUtils.currentCompanyId();
+        boolean isAdmin = SecurityUtils.isAdmin();
+
+        boolean deleted = jobService.deleteById(id , callerCompanyId ,isAdmin);
 
         if (!deleted) {
 

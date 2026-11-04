@@ -10,11 +10,13 @@ public class AuthPrincipal {
     private final Long id;
     private final String email;
     private final Role role;
+    private final Long companyId;
 
-    public AuthPrincipal(Long id, String email, Role role) {
+    public AuthPrincipal(Long id, String email, Role role, Long companyId) {
         this.id = id;
         this.email = email;
         this.role = role;
+        this.companyId = companyId;
     }
 
     public Long getId() {
@@ -27,5 +29,9 @@ public class AuthPrincipal {
 
     public Role getRole() {
         return role;
+    }
+
+    public Long getCompanyId() {
+        return companyId;
     }
 }
