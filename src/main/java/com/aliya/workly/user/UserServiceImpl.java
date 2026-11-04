@@ -29,11 +29,11 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(()  -> new ResourceNotFoundException("User not found"));
 
         if(user.getRole() != Role.COMPANY){
-            throw new BadrequestException("Target user must have the COMPANY role");
+            throw new IllegalArgumentException("Target user must have the COMPANY role");
         }
 
         Company company = companyRepository.findById(companyId)
-                .orElseThrow(() -> newBadRequestException("Unknown company"));
+                .orElseThrow(() -> new ResourceNotFoundException("Unknown company"));
 
         user.setManagedCompany(company);
         userRepository.save(user);
