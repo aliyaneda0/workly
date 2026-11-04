@@ -23,6 +23,7 @@ public class JwtService {
     private static final String CLAIM_ROLE = "role";
     private static final String CLAIM_UID = "uid";
     private static final String CLAIM_TYPE = "typ";
+    private static final String CLAIM_COMPANY_ID = "companyId";
     private static final String TYPE_ACCESS = "access";
 
     @Value("${app.jwt.secret}")
@@ -41,6 +42,8 @@ public class JwtService {
 
     private String buildToken(User user, String type, long ttlSeconds) {
         Date now = new Date();
+
+        Long companyId = user.getManagedCompany() != null ? user.getManagedCompany().getId() : null;
         return Jwts.builder()
                 .subject(user.getEmail())
                 .claim(CLAIM_UID, user.getId())
@@ -77,6 +80,10 @@ public class JwtService {
 
     public String extractRole(Claims claims) {
         return claims.get(CLAIM_ROLE, String.class);
+    }
+
+    public Long extractCompanyId(Claims claims) {
+        return claims.get(CLAIM_COMPANY_ID, Long.class);
     }
 
     private SecretKey signingKey() {

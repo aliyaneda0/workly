@@ -35,3 +35,4 @@ public class AuthPrincipal {
         return companyId;
     }
 }
+
