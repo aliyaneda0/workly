@@ -41,4 +41,7 @@ public class SecurityUtils {
     public static boolean isAdmin() {
         return currentRole() == Role.ADMIN;
     }
+
+    public static Long currentCompanyId(){ return currentPrincipal().getCompanyId();
+    }
 }

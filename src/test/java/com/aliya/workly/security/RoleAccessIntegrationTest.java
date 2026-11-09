@@ -11,11 +11,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationObservationContext;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -77,9 +83,16 @@ class RoleAccessIntegrationTest {
     }
 
     @Test
-    @WithAuthPrincipal(id = OWNER_ID, role = Role.COMPANY)
     void createJob_company_isCreated_andPostedByIsTheCallerNotTheBody() throws Exception {
-        mockMvc.perform(postJob())
+        // @WithAuthPrincipal can't be used here — its companyId must be a compile-time constant,
+        // but `company` (seeded in @BeforeEach) only gets its id once Postgres assigns one at
+        // insert time. Build the Authentication by hand instead, the same way
+        // JobVisibilityIntegrationTest.adminCaller_seesEveryonesDraftJobs() already does.
+        AuthPrincipal owner = new AuthPrincipal(OWNER_ID, "owner@test", Role.COMPANY, company.getId());
+        var auth = new UsernamePasswordAuthenticationToken(
+                owner, null, List.of(new SimpleGrantedAuthority("ROLE_COMPANY")));
+
+        mockMvc.perform(postJob().with(authentication(auth)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.postedBy").value(OWNER_ID));
     }

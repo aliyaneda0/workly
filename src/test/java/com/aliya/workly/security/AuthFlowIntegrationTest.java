@@ -78,11 +78,22 @@ class AuthFlowIntegrationTest {
 
     @Test
     void companyToken_canPostJob_andPostedByIsTheRealUserId() throws Exception {
-        JsonNode tokens = register(newEmail(), "COMPANY");
+        String email = newEmail();
+        JsonNode tokens = register(email, "COMPANY");
         long userId = userIdOf(tokens);
 
+        // Self-registration never assigns a company — that's the ADMIN-only
+        // PUT /admin/users/{id}/company flow, which this test isn't exercising. Go straight to the
+        // DB row instead of calling that endpoint, since all that matters here is the end state.
+        jdbc.update("update app_user set company_id = ? where id = ?", company.getId(), userId);
+
+        // The token above was minted before the assignment, so its companyId claim is still null —
+        // real assignCompanyToUser() revokes refresh tokens for exactly this reason: the only way
+        // to get a token whose claims reflect the new company is to log in again.
+        JsonNode freshTokens = bodyOf(login(email, PASSWORD));
+
         mockMvc.perform(post("/jobs")
-                        .header("Authorization", bearer(tokens))
+                        .header("Authorization", bearer(freshTokens))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"title":"Backend Engineer","companyId":%d,"postedBy":42}

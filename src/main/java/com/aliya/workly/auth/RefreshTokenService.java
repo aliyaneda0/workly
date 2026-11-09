@@ -88,6 +88,14 @@ public class RefreshTokenService {
         return repository.deleteExpiredBefore(Instant.now().minus(retention));
     }
 
+
+    // RefreshTokenService.java
+    @Transactional
+    public void revokeAllForUser(Long userId) {
+        repository.revokeAllForUser(userId, Instant.now());
+    }
+
+
     private String mint(Long userId, String familyId) {
         byte[] raw = new byte[TOKEN_BYTES];
         secureRandom.nextBytes(raw);

@@ -102,7 +102,7 @@ class JobVisibilityIntegrationTest {
 
     @Test
     void adminCaller_seesEveryonesDraftJobs() throws Exception {
-        AuthPrincipal admin = new AuthPrincipal(999_003L, "admin@test", Role.ADMIN);
+        AuthPrincipal admin = new AuthPrincipal(999_003L, "admin@test", Role.ADMIN,null);
         var auth = new UsernamePasswordAuthenticationToken(admin, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
 
         mockMvc.perform(get("/jobs").param("size", "100").with(authentication(auth)))
@@ -111,7 +111,7 @@ class JobVisibilityIntegrationTest {
     }
 
     private UsernamePasswordAuthenticationToken companyUser(Long userId) {
-        AuthPrincipal principal = new AuthPrincipal(userId, "user" + userId + "@test", Role.COMPANY);
+        AuthPrincipal principal = new AuthPrincipal(userId, "user" + userId + "@test", Role.COMPANY, null);
         return new UsernamePasswordAuthenticationToken(principal, null, List.of(new SimpleGrantedAuthority("ROLE_COMPANY")));
     }
 }

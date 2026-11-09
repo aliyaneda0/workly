@@ -28,7 +28,7 @@ public class ReviewController {
 
     @GetMapping("/{reviewId}")
     public ResponseEntity<ReviewDTO> getReviewById(@PathVariable Long companyId,
-                                                   @PathVariable Long reviewId) {
+                                                    @PathVariable Long reviewId) {
         ReviewDTO review = reviewService.findById(companyId, reviewId);
         if (review == null) {
             return ResponseEntity.notFound().build();
