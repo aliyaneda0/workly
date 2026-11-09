@@ -21,4 +21,8 @@ public @interface WithAuthPrincipal {
     String email() default "test-user@workly.test";
 
     Role role() default Role.APPLICANT;
+
+    // 0 means "no company" — annotation attributes can't default to null, and IDENTITY-generated
+    // company ids start at 1, so 0 is a safe sentinel for "unassigned."
+    long companyId() default 0L;
 }

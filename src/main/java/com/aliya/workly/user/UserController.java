@@ -19,8 +19,8 @@ private final UserService userService;
 
     public ResponseEntity<Void> assignCompany(@PathVariable Long id , @RequestBody CompanyAssignmentDto dto){
 
-      return  ResponseEntity.ok(0).build();
-
+      userService.assignCompanyToUser(id, dto.getCompanyId());
+      return ResponseEntity.noContent().build();
   }
 
 

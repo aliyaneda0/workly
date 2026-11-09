@@ -48,6 +48,7 @@ public class JwtService {
                 .subject(user.getEmail())
                 .claim(CLAIM_UID, user.getId())
                 .claim(CLAIM_ROLE, user.getRole().name())
+                .claim(CLAIM_COMPANY_ID, companyId)
                 .claim(CLAIM_TYPE, type)
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + ttlSeconds * 1000))

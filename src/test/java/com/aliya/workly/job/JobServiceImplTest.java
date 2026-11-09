@@ -76,7 +76,7 @@ class JobServiceImplTest {
 
         when(jobRepository.save(any(Job.class))).thenReturn(savedJob);
 
-        JobDTO result = jobService.createJob(input, 42L); // CHANGED: createJob now takes the acting user's id
+        JobDTO result = jobService.createJob(input, 42L,1L , false); // CHANGED: createJob now takes the acting user's id
 
         assertThat(result.getTitle()).isEqualTo("Java Developer");
         verify(jobRepository, times(1)).save(any(Job.class));
@@ -111,7 +111,7 @@ class JobServiceImplTest {
         when(jobRepository.existsById(99L)).thenReturn(false);
 
         assertThrows(ResourceNotFoundException.class,
-                () -> jobService.deleteById(99L));
+                () -> jobService.deleteById(99L , 1L , false));
 
         verify(jobRepository, never()).deleteById(any(Long.class)); // ✅ typed
     }

@@ -12,7 +12,8 @@ class WithAuthPrincipalSecurityContextFactory implements WithSecurityContextFact
 
     @Override
     public SecurityContext createSecurityContext(WithAuthPrincipal annotation) {
-        AuthPrincipal principal = new AuthPrincipal(annotation.id(), annotation.email(), annotation.role());
+        Long companyId = annotation.companyId() == 0L ? null : annotation.companyId();
+        AuthPrincipal principal = new AuthPrincipal(annotation.id(), annotation.email(), annotation.role(), companyId);
         // "ROLE_" + role mirrors what JwtAuthenticationFilter grants, so hasRole(...) rules behave the same
         var authentication = new UsernamePasswordAuthenticationToken(
                 principal, null, List.of(new SimpleGrantedAuthority("ROLE_" + annotation.role())));
