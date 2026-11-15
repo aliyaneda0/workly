@@ -11,24 +11,36 @@ built and proven here first, before the microservices split, on purpose (see
 
 ## Docs
 
-(These docs live locally under `docs/` and aren't tracked in git — see `.gitignore`. If you're
-reading this from a fresh clone, they won't be there.)
+These docs live locally under `docs/` and aren't tracked in git (see `.gitignore`) — if you're
+reading this from a fresh clone, they won't be there. [ROADMAP.md](docs/ROADMAP.md) (what's done,
+what's next), [PROGRESS.md](docs/PROGRESS.md) (dated changelog), [ARCHITECTURE.md](docs/ARCHITECTURE.md),
+and [DECISIONS.md](docs/DECISIONS.md) are the ones worth reading first.
 
--
 ## Running locally
 
 ```bash
 docker compose up --build -d
 ```
 
-Brings up Postgres + the app on one Docker network. Needs a `.env` file first (copy
-`.env.example` → `.env` and fill in real values — `.env` is gitignored). The app listens on
-`localhost:8080`; Postgres is reachable at `localhost:5433` (not the Postgres default `5432` —
-this project maps it there deliberately, see the `ports:` comment in `docker-compose.yml`).
+Brings up the monolith + its Postgres, **and** the first extracted microservice,
+[`company-service`](company-service/) + its own Postgres, all on one Docker network. Needs a
+`.env` file first (copy `.env.example` → `.env` and fill in real values — `.env` is gitignored).
 
-To run outside Docker instead (`./mvnw spring-boot:run`), export `DATABASE_URL`,
-`DATABASE_USERNAME`, `DATABASE_PASSWORD`, and `JWT_SECRET` yourself (`.env`'s values, pointed at
-`localhost:5433` if Postgres is still running via `docker compose`).
+| | Monolith | company-service |
+|---|---|---|
+| App port | `localhost:8080` | `localhost:8082` |
+| Postgres port | `localhost:5433` | `localhost:5434` |
+
+(Neither uses the Postgres default `5432` — this machine has an unrelated native Postgres service
+already bound to it; see the `ports:` comments in `docker-compose.yml`.) `company-service` isn't
+called by the monolith yet — it runs independently, verifying tokens the monolith's auth issues via
+a shared secret. See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for why.
+
+To run a service outside Docker instead (`./mvnw spring-boot:run`), export its env vars yourself —
+`DATABASE_URL`/`DATABASE_USERNAME`/`DATABASE_PASSWORD`/`JWT_SECRET` for the monolith, or
+`COMPANY_DATABASE_URL`/`COMPANY_DATABASE_USERNAME`/`COMPANY_DATABASE_PASSWORD`/`JWT_SECRET` for
+`company-service` (`.env`'s values, pointed at the matching port above if Postgres is still
+running via `docker compose`).
 
 ## Stack
 

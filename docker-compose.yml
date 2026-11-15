@@ -55,8 +55,58 @@ services:
     networks:
       - workly-net
 
+  company-postgres:
+    image: postgres:16-alpine
+    container_name: company-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${COMPANY_POSTGRES_DB:-company}
+      POSTGRES_USER: ${COMPANY_POSTGRES_USER:-company}
+      POSTGRES_PASSWORD: ${COMPANY_POSTGRES_PASSWORD:-company}
+    ports:
+      # Host port 5434 — 5432 is taken by the native Postgres service, 5433 by the monolith's
+      # own Postgres above. Container-internal port stays 5432.
+      - "5434:5432"
+    volumes:
+      - company-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${COMPANY_POSTGRES_USER:-company} -d ${COMPANY_POSTGRES_DB:-company}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - workly-net
+
+  company-service:
+    # Same pattern as the monolith's app service — expects company-service/target/*.jar to
+    # exist already. Run `./mvnw clean package -DskipTests` inside company-service/ first.
+    build: ./company-service
+    container_name: company-service
+    restart: unless-stopped
+    depends_on:
+      company-postgres:
+        condition: service_healthy
+    environment:
+      COMPANY_DATABASE_URL: jdbc:postgresql://company-postgres:5432/${COMPANY_POSTGRES_DB:-company}
+      COMPANY_DATABASE_USERNAME: ${COMPANY_POSTGRES_USER:-company}
+      COMPANY_DATABASE_PASSWORD: ${COMPANY_POSTGRES_PASSWORD:-company}
+      # Same shared secret as the monolith's app service above — this is what lets
+      # company-service verify a token the monolith's auth code issued.
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8082:8082"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - workly-net
+
 volumes:
   workly-pgdata:
+  company-pgdata:
 
 networks:
   workly-net:
