@@ -3,7 +3,6 @@ package com.aliya.workly.user;
 
 import com.aliya.workly.auth.RefreshToken;
 import com.aliya.workly.auth.RefreshTokenService;
-import com.aliya.workly.company.Company;
 import com.aliya.workly.company.CompanyRepository;
 import com.aliya.workly.exception.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
@@ -32,10 +31,11 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Target user must have the COMPANY role");
         }
 
-        Company company = companyRepository.findById(companyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Unknown company"));
+        if (!companyRepository.existsById(companyId)) {
+            throw new ResourceNotFoundException("Unknown company");
+        }
 
-        user.setManagedCompany(company);
+        user.setManagedCompanyId(companyId);
         userRepository.save(user);
 
         refreshTokenService.revokeAllForUser(user.getId());

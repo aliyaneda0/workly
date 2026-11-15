@@ -1,6 +1,5 @@
 package com.aliya.workly.review;
 
-import com.aliya.workly.company.Company;
 import jakarta.persistence.*;
 
 
@@ -19,9 +18,8 @@ public class Review {
 
     private Long reviewedBy;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id")
-    private Company company;
+    @Column(name = "company_id")
+    private Long companyId;
 
     public Review() {
     }
@@ -58,12 +56,12 @@ public class Review {
         this.rating = rating;
     }
 
-    public Company getCompany() {
-        return company;
+    public Long getCompanyId() {
+        return companyId;
     }
 
-    public void setCompany(Company company) {
-        this.company = company;
+    public void setCompanyId(Long companyId) {
+        this.companyId = companyId;
     }
 
     public Long getReviewedBy() {

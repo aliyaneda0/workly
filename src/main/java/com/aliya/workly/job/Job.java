@@ -1,6 +1,5 @@
 package com.aliya.workly.job;
 
-import com.aliya.workly.company.Company;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -27,9 +26,8 @@ public class Job {
 
     private Long postedBy;
 
-    @ManyToOne
-    @JoinColumn(name = "company_id")
-    private Company company;
+    @Column(name = "company_id")
+    private Long companyId;
 
 
 
@@ -93,12 +91,12 @@ public class Job {
     }
 
 
-    public Company getCompany() {
-        return company;
+    public Long getCompanyId() {
+        return companyId;
     }
 
-    public void setCompany(Company company) {
-        this.company = company;
+    public void setCompanyId(Long companyId) {
+        this.companyId = companyId;
     }
 
     public Long getPostedBy() {

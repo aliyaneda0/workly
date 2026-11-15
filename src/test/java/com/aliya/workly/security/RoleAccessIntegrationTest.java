@@ -64,7 +64,7 @@ class RoleAccessIntegrationTest {
         ownersReview = new Review();
         ownersReview.setTitle("Original title");
         ownersReview.setRating(3.0);
-        ownersReview.setCompany(company);
+        ownersReview.setCompanyId(company.getId());
         ownersReview.setReviewedBy(OWNER_ID);
         ownersReview = reviewRepository.save(ownersReview);
     }

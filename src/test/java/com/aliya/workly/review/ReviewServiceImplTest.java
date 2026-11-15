@@ -1,7 +1,6 @@
 package com.aliya.workly.review;
 
 import com.aliya.workly.common.PageResponse;
-import com.aliya.workly.company.Company;
 import com.aliya.workly.company.CompanyRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,16 +33,10 @@ class ReviewServiceImplTest {
     @InjectMocks
     private ReviewServiceImpl reviewService;
 
-    private Company companyWithId(Long id) {
-        Company company = new Company();
-        company.setId(id);
-        return company;
-    }
-
     private Review reviewOwnedBy(Long reviewId, Long companyId, Long ownerId) {
         Review review = new Review();
         review.setId(reviewId);
-        review.setCompany(companyWithId(companyId));
+        review.setCompanyId(companyId);
         review.setReviewedBy(ownerId);
         review.setTitle("Original title");
         return review;
@@ -84,7 +77,7 @@ class ReviewServiceImplTest {
 
     @Test
     void save_whenCompanyExists_setsReviewedByFromCallerNotDTO() {
-        when(companyRepository.findById(5L)).thenReturn(Optional.of(companyWithId(5L)));
+        when(companyRepository.existsById(5L)).thenReturn(true);
         when(reviewRepository.save(any(Review.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ReviewDTO input = new ReviewDTO(null, "Great place", "Loved it", 4.5, 5L);
@@ -97,7 +90,7 @@ class ReviewServiceImplTest {
 
     @Test
     void save_whenCompanyMissing_returnsNull() {
-        when(companyRepository.findById(99L)).thenReturn(Optional.empty());
+        when(companyRepository.existsById(99L)).thenReturn(false);
 
         ReviewDTO input = new ReviewDTO(null, "Great place", "Loved it", 4.5, 99L);
         assertNull(reviewService.save(99L, input, 42L));

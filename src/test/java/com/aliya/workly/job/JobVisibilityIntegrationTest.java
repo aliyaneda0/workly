@@ -59,14 +59,14 @@ class JobVisibilityIntegrationTest {
         openJob = new Job();
         openJob.setTitle(OPEN_TITLE);
         openJob.setStatus(JobStatus.OPEN);
-        openJob.setCompany(company);
+        openJob.setCompanyId(company.getId());
         openJob.setPostedBy(OWNER_ID);
         openJob = jobRepository.save(openJob);
 
         draftJob = new Job();
         draftJob.setTitle(DRAFT_TITLE);
         draftJob.setStatus(JobStatus.DRAFT);
-        draftJob.setCompany(company);
+        draftJob.setCompanyId(company.getId());
         draftJob.setPostedBy(OWNER_ID);
         draftJob = jobRepository.save(draftJob);
     }

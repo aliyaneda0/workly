@@ -43,7 +43,7 @@ public class JwtService {
     private String buildToken(User user, String type, long ttlSeconds) {
         Date now = new Date();
 
-        Long companyId = user.getManagedCompany() != null ? user.getManagedCompany().getId() : null;
+        Long companyId = user.getManagedCompanyId();
         return Jwts.builder()
                 .subject(user.getEmail())
                 .claim(CLAIM_UID, user.getId())

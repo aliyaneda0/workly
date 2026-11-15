@@ -2,7 +2,6 @@ package com.aliya.workly.job;
 
 
 import com.aliya.workly.common.PageResponse;
-import com.aliya.workly.company.Company;
 import com.aliya.workly.company.CompanyRepository;
 import com.aliya.workly.exception.ResourceNotFoundException;
 import org.springframework.data.domain.Page;
@@ -42,11 +41,10 @@ public class JobServiceImpl implements JobService {
         // Rule : check against request companyId before creating
         requiredCompanyAccess(jobDTO.getCompanyId(), callerCompanyId, isAdmin);
 
-
-        Company company = companyRepository.findById(jobDTO.getCompanyId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Company not found with id: " + jobDTO.getCompanyId()));
-        Job job = toEntity(jobDTO, company);  // ← toEntity takes dto + company
+        if (!companyRepository.existsById(jobDTO.getCompanyId())) {
+            throw new ResourceNotFoundException("Company not found with id: " + jobDTO.getCompanyId());
+        }
+        Job job = toEntity(jobDTO);
         job.setPostedBy(postedByUserId); // CHANGED: from the authenticated caller, never from jobDTO
         return toDTO(jobRepository.save(job));
     }
@@ -78,7 +76,7 @@ public class JobServiceImpl implements JobService {
                         "Job not found with id: " + id));
 
         // Rule : Check if caller has access to the existing job's company
-        requiredCompanyAccess(job.getCompany().getId(),callerCompanyId , isAdmin);
+        requiredCompanyAccess(job.getCompanyId(),callerCompanyId , isAdmin);
 
         job.setTitle(jobDTO.getTitle());
         job.setDescription(jobDTO.getDescription());
@@ -90,16 +88,16 @@ public class JobServiceImpl implements JobService {
         // if companyId changed, re-fetch and update
         // Rule : Only ADMIN may change companyId if it is different from the stored row
 
-        if (jobDTO.getCompanyId() != null && !jobDTO.getCompanyId().equals(job.getCompany().getId())) {
+        if (jobDTO.getCompanyId() != null && !jobDTO.getCompanyId().equals(job.getCompanyId())) {
 
             if(!isAdmin){
                 throw new AccessDeniedException("Only admins can reassign a job to a different company");
             }
 
-            Company company = companyRepository.findById(jobDTO.getCompanyId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Company not found with id: " + jobDTO.getCompanyId()));
-            job.setCompany(company);
+            if (!companyRepository.existsById(jobDTO.getCompanyId())) {
+                throw new ResourceNotFoundException("Company not found with id: " + jobDTO.getCompanyId());
+            }
+            job.setCompanyId(jobDTO.getCompanyId());
         }
 
         return toDTO(job);
@@ -120,7 +118,7 @@ public class JobServiceImpl implements JobService {
         Optional<Job> job = jobRepository.findById(id);
 
         // Check against the secure database row's company id, never request input
-        requiredCompanyAccess(job.get().getCompany().getId(), callerCompanyId, isAdmin);
+        requiredCompanyAccess(job.get().getCompanyId(), callerCompanyId, isAdmin);
 
         jobRepository.deleteById(id);
         return true;
@@ -137,12 +135,12 @@ public class JobServiceImpl implements JobService {
         dto.setMaxSalary(job.getMaxSalary());
         dto.setLocation(job.getLocation());
         dto.setStatus(job.getStatus());
-        dto.setCompanyId(job.getCompany().getId());
+        dto.setCompanyId(job.getCompanyId());
         dto.setPostedBy(job.getPostedBy());
          return dto;
     }
 
-    private Job toEntity(JobDTO dto, Company company) {
+    private Job toEntity(JobDTO dto) {
         Job job = new Job();
         job.setTitle(dto.getTitle());
         job.setDescription(dto.getDescription());
@@ -150,7 +148,7 @@ public class JobServiceImpl implements JobService {
         job.setMaxSalary(dto.getMaxSalary());
         job.setLocation(dto.getLocation());
         job.setStatus(dto.getStatus() != null ? dto.getStatus() : JobStatus.DRAFT);
-        job.setCompany(company);
+        job.setCompanyId(dto.getCompanyId());
         return job;
     }
 
