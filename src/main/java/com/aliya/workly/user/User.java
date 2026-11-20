@@ -1,6 +1,5 @@
 package com.aliya.workly.user;
 
-import com.aliya.workly.company.Company;
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -30,10 +29,8 @@ public class User {
     private Instant createdAt;
 
     // if role == COMPANY: which Company row they administer.
-    // Not assigned anywhere yet — company-onboarding flow is a Phase 2 follow-up.
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id")
-    private Company managedCompany;
+    @Column(name = "company_id")
+    private Long managedCompanyId;
 
     public User() {
     }
@@ -99,11 +96,11 @@ public class User {
         this.createdAt = createdAt;
     }
 
-    public Company getManagedCompany() {
-        return managedCompany;
+    public Long getManagedCompanyId() {
+        return managedCompanyId;
     }
 
-    public void setManagedCompany(Company managedCompany) {
-        this.managedCompany = managedCompany;
+    public void setManagedCompanyId(Long managedCompanyId) {
+        this.managedCompanyId = managedCompanyId;
     }
 }

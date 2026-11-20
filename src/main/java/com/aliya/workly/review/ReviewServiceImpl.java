@@ -2,7 +2,6 @@ package com.aliya.workly.review;
 
 
 import com.aliya.workly.common.PageResponse;
-import com.aliya.workly.company.Company;
 import com.aliya.workly.company.CompanyRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,19 +31,18 @@ public class ReviewServiceImpl implements ReviewService{
     @Override
     public ReviewDTO findById(Long companyId, Long reviewId) {
         return reviewRepository.findById(reviewId)
-                .filter(r -> r.getCompany() != null && r.getCompany().getId().equals(companyId))
+                .filter(r -> r.getCompanyId() != null && r.getCompanyId().equals(companyId))
                 .map(this::toDTO)
                 .orElse(null);
     }
 
     @Override
     public ReviewDTO save(Long companyId, ReviewDTO reviewDTO, Long reviewedByUserId) {
-        Optional<Company> optionalCompany = companyRepository.findById(companyId);
-        if (optionalCompany.isEmpty()) {
+        if (!companyRepository.existsById(companyId)) {
             return null;
         }
         Review review = toEntity(reviewDTO);
-        review.setCompany(optionalCompany.get());
+        review.setCompanyId(companyId);
         review.setReviewedBy(reviewedByUserId); // CHANGED: from the authenticated caller, never from reviewDTO
         Review saved = reviewRepository.save(review);
         return toDTO(saved);
@@ -57,7 +55,7 @@ public class ReviewServiceImpl implements ReviewService{
             return null;
         }
         Review review = optionalReview.get();
-        if (review.getCompany() == null || !review.getCompany().getId().equals(companyId)) {
+        if (review.getCompanyId() == null || !review.getCompanyId().equals(companyId)) {
             return null;
         }
         // CHANGED: ownership check against the EXISTING review's reviewedBy — never trust
@@ -79,7 +77,7 @@ public class ReviewServiceImpl implements ReviewService{
             return false;
         }
         Review review = optionalReview.get();
-        if (review.getCompany() == null || !review.getCompany().getId().equals(companyId)) {
+        if (review.getCompanyId() == null || !review.getCompanyId().equals(companyId)) {
             return false;
         }
         requireOwnerOrAdmin(review, actingUserId, isAdmin);
@@ -96,7 +94,7 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     private ReviewDTO toDTO(Review review) {
-        Long companyId = review.getCompany() != null ? review.getCompany().getId() : null;
+        Long companyId = review.getCompanyId();
         ReviewDTO dto = new ReviewDTO(
                 review.getId(),
                 review.getTitle(),

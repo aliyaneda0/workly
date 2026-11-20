@@ -1,0 +1,77 @@
+package com.aliya.reviewservice.review;
+
+
+import com.aliya.reviewservice.common.PageResponse;
+import com.aliya.reviewservice.security.SecurityUtils;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/company/{companyId}/reviews")
+public class ReviewController {
+
+    private final ReviewService reviewService;
+
+    public ReviewController(ReviewService reviewService) {
+        this.reviewService = reviewService;
+    }
+
+    @GetMapping
+    public PageResponse<ReviewDTO> getAllReviews(@PathVariable Long companyId,
+            @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        return reviewService.findAllByCompanyId(companyId, pageable);
+    }
+
+    @GetMapping("/{reviewId}")
+    public ResponseEntity<ReviewDTO> getReviewById(@PathVariable Long companyId,
+                                                    @PathVariable Long reviewId) {
+        ReviewDTO review = reviewService.findById(companyId, reviewId);
+        if (review == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(review);
+    }
+
+    @PostMapping
+    // any authenticated user may write a review (APPLICANT typical, not exclusive — see AUTH_GUIDE.md)
+    public ResponseEntity<ReviewDTO> createReview(@PathVariable Long companyId,
+                                                  @Valid @RequestBody ReviewDTO reviewDTO) {
+        // reviewedBy comes from the authenticated caller, not reviewDTO
+        ReviewDTO created = reviewService.save(companyId, reviewDTO, SecurityUtils.currentUserId());
+        if (created == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PutMapping("/{reviewId}")
+    public ResponseEntity<ReviewDTO> updateReview(@PathVariable Long companyId,
+                                                  @PathVariable Long reviewId,
+                                                  @Valid @RequestBody ReviewDTO reviewDTO) {
+        // service enforces own-review-or-admin using the ACTING user, not the DTO
+        ReviewDTO updated = reviewService.update(companyId, reviewId, reviewDTO,
+                SecurityUtils.currentUserId(), SecurityUtils.isAdmin());
+        if (updated == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{reviewId}")
+    public ResponseEntity<Void> deleteReview(@PathVariable Long companyId,
+                                             @PathVariable Long reviewId) {
+        // own-review-or-admin, same as updateReview
+        boolean deleted = reviewService.deleteById(companyId, reviewId,
+                SecurityUtils.currentUserId(), SecurityUtils.isAdmin());
+        if (!deleted) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+
+}

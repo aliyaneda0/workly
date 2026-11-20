@@ -1,7 +1,6 @@
 package com.aliya.workly.job;
 
 import com.aliya.workly.common.PageResponse;
-import com.aliya.workly.company.Company;
 import com.aliya.workly.company.CompanyRepository;
 import com.aliya.workly.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -37,13 +36,9 @@ class JobServiceImplTest {
 
     @Test
     void getJobById_whenJobExists_returnsJobDTO() {
-        // Build a Company AND attach it to the Job
-        Company company = new Company();
-        company.setId(1L);
-
         Job job = new Job();
         job.setId(1L);
-        job.setCompany(company); // ← was missing, caused Error 2
+        job.setCompanyId(1L);
 
         when(jobRepository.findById(1L)).thenReturn(Optional.of(job));
 
@@ -61,10 +56,7 @@ class JobServiceImplTest {
     @Test
     void createJob_savesAndReturnsJobDTO() {
 
-        Company company = new Company();
-        company.setId(1L);
-
-        when(companyRepository.findById(1L)).thenReturn(Optional.of(company));
+        when(companyRepository.existsById(1L)).thenReturn(true);
 
         JobDTO input = new JobDTO();
         input.setTitle("Java Developer");
@@ -72,7 +64,7 @@ class JobServiceImplTest {
 
         Job savedJob = new Job();
         savedJob.setTitle("Java Developer");
-        savedJob.setCompany(company); // ← FIX 2: toDTO() needs this to not crash
+        savedJob.setCompanyId(1L); // ← FIX 2: toDTO() needs this to not crash
 
         when(jobRepository.save(any(Job.class))).thenReturn(savedJob);
 
@@ -84,13 +76,10 @@ class JobServiceImplTest {
 
     @Test
     void getAllJobs_mapsPageOfJobsToPageResponseOfDTOs() {
-        Company company = new Company();
-        company.setId(1L);
-
         Job job = new Job();
         job.setId(1L);
         job.setTitle("Backend Engineer");
-        job.setCompany(company);
+        job.setCompanyId(1L);
 
         Pageable pageable = PageRequest.of(0, 20);
         when(jobRepository.findAll(any(Specification.class), eq(pageable)))

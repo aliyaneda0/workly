@@ -1,11 +1,7 @@
 package com.aliya.workly.company;
 
 
-import com.aliya.workly.job.Job;
-import com.aliya.workly.review.Review;
 import jakarta.persistence.*;
-
-import java.util.List;
 
 @Entity
 public class Company {
@@ -19,13 +15,6 @@ public class Company {
     private String description;
 
     private String Location;
-
-    @OneToMany(mappedBy = "company")
-    private List<Job> jobs;
-
-    @OneToMany(mappedBy = "company")
-    private List<Review> reviews;
-
 
     public Company() {
     }
@@ -62,19 +51,4 @@ public class Company {
         Location = location;
     }
 
-    public List<Job> getJobs() {
-        return jobs;
-    }
-
-    public void setJobs(List<Job> jobs) {
-        this.jobs = jobs;
-    }
-
-    public List<Review> getReviews() {
-        return reviews;
-    }
-
-    public void setReviews(List<Review> reviews) {
-        this.reviews = reviews;
-    }
 }
