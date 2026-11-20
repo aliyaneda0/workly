@@ -25,7 +25,13 @@ public class CompanyController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CompanyDTO> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(companyService.findById(id));
+        CompanyDTO company = companyService.findById(id);
+
+        if (company == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(company);
     }
 
     @PostMapping

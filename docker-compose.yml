@@ -104,9 +104,66 @@ services:
     networks:
       - workly-net
 
+  job-postgres:
+    image: postgres:16-alpine
+    container_name: job-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${JOB_POSTGRES_DB:-job}
+      POSTGRES_USER: ${JOB_POSTGRES_USER:-job}
+      POSTGRES_PASSWORD: ${JOB_POSTGRES_PASSWORD:-job}
+    ports:
+      # Host port 5435 — 5432 is native Postgres, 5433 the monolith's, 5434 company-service's.
+      # Container-internal port stays 5432.
+      - "5435:5432"
+    volumes:
+      - job-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${JOB_POSTGRES_USER:-job} -d ${JOB_POSTGRES_DB:-job}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - workly-net
+
+  job-service:
+    # Same pattern as company-service's own service below — expects job-service/target/*.jar
+    # to exist already. Run `./mvnw clean package -DskipTests` inside job-service/ first.
+    build: ./job-service
+    container_name: job-service
+    restart: unless-stopped
+    depends_on:
+      job-postgres:
+        condition: service_healthy
+      company-service:
+        condition: service_healthy
+    environment:
+      JOB_DATABASE_URL: jdbc:postgresql://job-postgres:5432/${JOB_POSTGRES_DB:-job}
+      JOB_DATABASE_USERNAME: ${JOB_POSTGRES_USER:-job}
+      JOB_DATABASE_PASSWORD: ${JOB_POSTGRES_PASSWORD:-job}
+      # Same shared secret as the monolith and company-service — lets job-service verify a
+      # token the monolith's auth code issued.
+      JWT_SECRET: ${JWT_SECRET}
+      # "company-service" is that service's name above — resolved over workly-net, no host
+      # port involved. This is job-service's first real inter-service call (see
+      # com.aliya.jobservice.company.CompanyClient) — a plain RestTemplate call for now, not
+      # yet Eureka-discovered.
+      COMPANY_SERVICE_URL: http://company-service:8082
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - workly-net
+
 volumes:
   workly-pgdata:
   company-pgdata:
+  job-pgdata:
 
 networks:
   workly-net:
