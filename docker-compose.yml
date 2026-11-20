@@ -214,11 +214,72 @@ services:
     networks:
       - workly-net
 
+  auth-postgres:
+    image: postgres:16-alpine
+    container_name: auth-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${AUTH_POSTGRES_DB:-auth}
+      POSTGRES_USER: ${AUTH_POSTGRES_USER:-auth}
+      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD:-auth}
+    ports:
+      # Host port 5437 — 5432 is native Postgres, 5433 the monolith's, 5434 company-service's,
+      # 5435 job-service's, 5436 review-service's. Container-internal port stays 5432.
+      - "5437:5432"
+    volumes:
+      - auth-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER:-auth} -d ${AUTH_POSTGRES_DB:-auth}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - workly-net
+
+  auth-service:
+    # Same pattern as the other extracted services above — expects auth-service/target/*.jar
+    # to exist already. Run `./mvnw clean package -DskipTests` inside auth-service/ first.
+    build: ./auth-service
+    container_name: auth-service
+    restart: unless-stopped
+    depends_on:
+      auth-postgres:
+        condition: service_healthy
+      company-service:
+        condition: service_healthy
+    environment:
+      AUTH_DATABASE_URL: jdbc:postgresql://auth-postgres:5432/${AUTH_POSTGRES_DB:-auth}
+      AUTH_DATABASE_USERNAME: ${AUTH_POSTGRES_USER:-auth}
+      AUTH_DATABASE_PASSWORD: ${AUTH_POSTGRES_PASSWORD:-auth}
+      # Same shared secret as every other service — auth-service is now the only ISSUER of it;
+      # everyone else keeps verifying with it (see DECISIONS.md ADR-001 and ADR-011).
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      # GOOGLE_CLIENT_ID/_SECRET, GITHUB_CLIENT_ID/_SECRET deliberately not passed through here,
+      # same as the monolith's own app service — application.properties' ${...:unset} fallback
+      # lets the app start without them; OAuth2 login just rejects the handshake until real
+      # values are set (see DECISIONS.md ADR-008).
+      # Same CompanyClient pattern job-service/review-service already use (UserServiceImpl's
+      # admin-assigns-company endpoint validates the companyId this way).
+      COMPANY_SERVICE_URL: http://company-service:8082
+    ports:
+      - "8084:8084"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8084/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - workly-net
+
 volumes:
   workly-pgdata:
   company-pgdata:
   job-pgdata:
   review-pgdata:
+  auth-pgdata:
 
 networks:
   workly-net:

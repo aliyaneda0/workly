@@ -22,34 +22,40 @@ and [DECISIONS.md](docs/DECISIONS.md) are the ones worth reading first.
 docker compose up --build -d
 ```
 
-Brings up the monolith + its Postgres, **and** the three extracted microservices so far —
-[`company-service`](company-service/), [`job-service`](job-service/), and
-[`review-service`](review-service/), each with its own Postgres — all on one Docker network.
-Needs a `.env` file first (copy `.env.example` → `.env` and fill in real values — `.env` is
-gitignored).
+Brings up the monolith + its Postgres, **and** all four extracted microservices —
+[`company-service`](company-service/), [`job-service`](job-service/),
+[`review-service`](review-service/), and [`auth-service`](auth-service/), each with its own
+Postgres — all on one Docker network. Needs a `.env` file first (copy `.env.example` → `.env`
+and fill in real values — `.env` is gitignored).
 
-| | Monolith | company-service | job-service | review-service |
-|---|---|---|---|---|
-| App port | `localhost:8080` | `localhost:8082` | `localhost:8081` | `localhost:8083` |
-| Postgres port | `localhost:5433` | `localhost:5434` | `localhost:5435` | `localhost:5436` |
+| | Monolith | company-service | job-service | review-service | auth-service |
+|---|---|---|---|---|---|
+| App port | `localhost:8080` | `localhost:8082` | `localhost:8081` | `localhost:8083` | `localhost:8084` |
+| Postgres port | `localhost:5433` | `localhost:5434` | `localhost:5435` | `localhost:5436` | `localhost:5437` |
 
 (None of these use the Postgres default `5432` — this machine has an unrelated native Postgres
 service already bound to it; see the `ports:` comments in `docker-compose.yml`.) None of the
 extracted services are called by the monolith yet — it keeps serving all
-`/jobs`/`/companies`/`/company/*/reviews` traffic from its own local tables. `job-service` and
-`review-service` *do* each call `company-service` (their own `CompanyClient`, over HTTP) to
-validate a `companyId` — the project's first real inter-service calls. See
-[ARCHITECTURE.md](docs/ARCHITECTURE.md) and [DECISIONS.md ADR-010](docs/DECISIONS.md#adr-010-job-service-extraction--the-first-real-inter-service-call)
-for why.
+`/jobs`/`/companies`/`/company/*/reviews`/`/auth/**` traffic from its own local tables, and still
+issues its own tokens. `job-service`, `review-service`, and `auth-service` each call
+`company-service` (their own `CompanyClient`, over HTTP) to validate a `companyId`. `auth-service`
+is a different kind of parallel run than the other three — it's the first extracted service that
+actually issues tokens (not just verifies them), with its own independent `app_user` table, so
+right now there are two working, independent issuers (deliberate and safe only because both share
+one secret and claims shape — see
+[DECISIONS.md ADR-011](docs/DECISIONS.md#adr-011-auth-service-extraction--the-first-real-issuer-and-a-deliberate-split-brain-on-user-data)).
+See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full picture.
 
 To run a service outside Docker instead (`./mvnw spring-boot:run`), export its env vars yourself —
 `DATABASE_URL`/`DATABASE_USERNAME`/`DATABASE_PASSWORD`/`JWT_SECRET` for the monolith,
 `COMPANY_DATABASE_URL`/`COMPANY_DATABASE_USERNAME`/`COMPANY_DATABASE_PASSWORD`/`JWT_SECRET` for
 `company-service`, `JOB_DATABASE_URL`/`JOB_DATABASE_USERNAME`/`JOB_DATABASE_PASSWORD`/
-`JWT_SECRET`/`COMPANY_SERVICE_URL` for `job-service`, or
+`JWT_SECRET`/`COMPANY_SERVICE_URL` for `job-service`,
 `REVIEW_DATABASE_URL`/`REVIEW_DATABASE_USERNAME`/`REVIEW_DATABASE_PASSWORD`/`JWT_SECRET`/
-`COMPANY_SERVICE_URL` for `review-service` (`.env`'s values, pointed at the matching port above
-if Postgres is still running via `docker compose`).
+`COMPANY_SERVICE_URL` for `review-service`, or
+`AUTH_DATABASE_URL`/`AUTH_DATABASE_USERNAME`/`AUTH_DATABASE_PASSWORD`/`JWT_SECRET`/
+`ADMIN_EMAIL`/`ADMIN_PASSWORD`/`COMPANY_SERVICE_URL` for `auth-service` (`.env`'s values, pointed
+at the matching port above if Postgres is still running via `docker compose`).
 
 ## Stack
 
