@@ -160,10 +160,65 @@ services:
     networks:
       - workly-net
 
+  review-postgres:
+    image: postgres:16-alpine
+    container_name: review-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${REVIEW_POSTGRES_DB:-review}
+      POSTGRES_USER: ${REVIEW_POSTGRES_USER:-review}
+      POSTGRES_PASSWORD: ${REVIEW_POSTGRES_PASSWORD:-review}
+    ports:
+      # Host port 5436 — 5432 is native Postgres, 5433 the monolith's, 5434 company-service's,
+      # 5435 job-service's. Container-internal port stays 5432.
+      - "5436:5432"
+    volumes:
+      - review-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${REVIEW_POSTGRES_USER:-review} -d ${REVIEW_POSTGRES_DB:-review}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - workly-net
+
+  review-service:
+    # Same pattern as job-service's own service above — expects review-service/target/*.jar
+    # to exist already. Run `./mvnw clean package -DskipTests` inside review-service/ first.
+    build: ./review-service
+    container_name: review-service
+    restart: unless-stopped
+    depends_on:
+      review-postgres:
+        condition: service_healthy
+      company-service:
+        condition: service_healthy
+    environment:
+      REVIEW_DATABASE_URL: jdbc:postgresql://review-postgres:5432/${REVIEW_POSTGRES_DB:-review}
+      REVIEW_DATABASE_USERNAME: ${REVIEW_POSTGRES_USER:-review}
+      REVIEW_DATABASE_PASSWORD: ${REVIEW_POSTGRES_PASSWORD:-review}
+      # Same shared secret as the monolith and the other extracted services — lets
+      # review-service verify a token the monolith's auth code issued.
+      JWT_SECRET: ${JWT_SECRET}
+      # Same CompanyClient pattern job-service already uses — resolved over workly-net, no
+      # host port involved.
+      COMPANY_SERVICE_URL: http://company-service:8082
+    ports:
+      - "8083:8083"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - workly-net
+
 volumes:
   workly-pgdata:
   company-pgdata:
   job-pgdata:
+  review-pgdata:
 
 networks:
   workly-net:
